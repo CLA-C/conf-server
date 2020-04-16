@@ -26,12 +26,12 @@ const commentSchema = new Schema({
 const dishSchema = new Schema({
     name: {
         type: String,
-        require: true,
+        required: true,
         unique: true
     },
     description: {
         type: String,
-        require: true
+        required: true
     },
     comments: [commentSchema],
     image: {
