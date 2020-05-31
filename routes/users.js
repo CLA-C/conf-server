@@ -1,6 +1,7 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 const passport = require('passport')
+const cors = require('./cors')
 const authenticate = require('../authenticate')
 const User = require('../models/user')
 const userRouter = express.Router()
@@ -8,7 +9,7 @@ const userRouter = express.Router()
 userRouter.use(bodyParser.json())
 
 /* GET users listing. */
-userRouter.get('/', authenticate.verifyUser, authenticate.verifyAdmin, function (req, res, next) {
+userRouter.get('/', cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, function (req, res, next) {
     User.find({})
         .then((users) => {
             res.statusCode = 200
@@ -18,7 +19,7 @@ userRouter.get('/', authenticate.verifyUser, authenticate.verifyAdmin, function 
         .catch((err) => next(err))
 })
 
-userRouter.post('/signup', (req, res, next) => {
+userRouter.post('/signup', cors.corsWithOptions, (req, res, next) => {
     const newUser = new User({ username: req.body.username })
     if (req.body.firstname) {
         newUser.firstname = req.body.firstname
@@ -44,14 +45,14 @@ userRouter.post('/signup', (req, res, next) => {
     })
 })
 
-userRouter.post('/login', passport.authenticate('local'), (req, res) => {
+userRouter.post('/login', cors.corsWithOptions, passport.authenticate('local'), (req, res) => {
     let token = authenticate.getToken({ _id: req.user._id }) // id is enough to create web token, user added through passport auth middleware
     res.statusCode = 200
     res.setHeader('Content-Type', 'application/json')
     res.json({ success: true, token: token, status: 'You are logged in!' })    
 })
 
-userRouter.get('/logout', (req, res, next) => {
+userRouter.get('/logout', cors.corsWithOptions, (req, res, next) => {
     if (req.session) {
         req.session.destroy()
         res.clearCookie('session-id')
