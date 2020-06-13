@@ -3,6 +3,7 @@ const LocalStrategy = require('passport-local').Strategy
 const JwtStrategy = require('passport-jwt').Strategy
 const ExtractJwt = require('passport-jwt').ExtractJwt
 const jwt = require('jsonwebtoken')
+const FacebookTokenStrategy = require('passport-facebook-token')
 
 const config = require('./config') 
 
@@ -48,3 +49,34 @@ exports.verifyAdmin = (req, res, next) => {
     err.status = 403
     return next(err)
 }
+
+exports.facebookPassport = passport.use(new FacebookTokenStrategy({
+    clientID: config.facebook.clientId,
+    clientSecret: config.facebook.clientSecret
+}, (accToken, refreshToken, profile, done) => {
+    User.findOne({ facebookId: profile.id }, (err, user) => {
+        if (err) {
+            return done(err, false)
+        }
+
+        if (user !== null) {
+            return done(null, user) // return user if already exists
+        }
+
+        // create new user with data from FB
+        user = new User({
+            username: profile.displayName,
+            firstName: profile.name.givenName,
+            lastName: profile.name.familyName,
+            facebookId: profile.id,
+        })
+
+        user.save((err, user) => {
+            if (err) {
+                return done(err, false)
+            }
+
+            return done(null, user)
+        })
+    })
+}))
